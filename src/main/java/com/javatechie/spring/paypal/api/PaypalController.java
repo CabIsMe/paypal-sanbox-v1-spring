@@ -1,23 +1,26 @@
 package com.javatechie.spring.paypal.api;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.*;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 
 import com.paypal.api.payments.Links;
 import com.paypal.api.payments.Payment;
 import com.paypal.base.rest.PayPalRESTException;
+import org.springframework.web.client.RestTemplate;
 
-@Controller
+import javax.servlet.http.HttpSession;
+import java.util.HashMap;
+import java.util.Map;
+
+@RestController
 public class PaypalController {
 
 	@Autowired
 	PaypalService service;
 
-	public static final String SUCCESS_URL = "pay/success";
+	public static final String SUCCESS_URL = "checkout";
 	public static final String CANCEL_URL = "pay/cancel";
 
 	@GetMapping("/")
@@ -25,23 +28,26 @@ public class PaypalController {
 		return "home";
 	}
 
+	//localhost:9090/pay
 	@PostMapping("/pay")
-	public String payment(@ModelAttribute("order") Order order) {
+	public ResponseEntity<String> payment(@RequestBody Order order) {
 		try {
 			Payment payment = service.createPayment(order.getPrice(), order.getCurrency(), order.getMethod(),
 					order.getIntent(), order.getDescription(), "http://localhost:9090/" + CANCEL_URL,
-					"http://localhost:9090/" + SUCCESS_URL);
+					"http://localhost:3000/" + SUCCESS_URL);
+
 			for(Links link:payment.getLinks()) {
 				if(link.getRel().equals("approval_url")) {
-					return "redirect:"+link.getHref();
+					System.out.println(payment.getPayer());
+					return ResponseEntity.status(HttpStatus.OK).body(link.getHref());
 				}
 			}
-			
+
 		} catch (PayPalRESTException e) {
-		
+
 			e.printStackTrace();
 		}
-		return "redirect:/";
+		return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment creation failed.");
 	}
 	
 	 @GetMapping(value = CANCEL_URL)
@@ -49,18 +55,57 @@ public class PaypalController {
 	        return "cancel";
 	    }
 
-	    @GetMapping(value = SUCCESS_URL)
-	    public String successPay(@RequestParam("paymentId") String paymentId, @RequestParam("PayerID") String payerId) {
-	        try {
-	            Payment payment = service.executePayment(paymentId, payerId);
-	            System.out.println(payment.toJSON());
-	            if (payment.getState().equals("approved")) {
-	                return "success";
-	            }
-	        } catch (PayPalRESTException e) {
-	         System.out.println(e.getMessage());
-	        }
-	        return "redirect:/";
-	    }
-
+	@GetMapping("pay/success")
+	public ResponseEntity<String> successPay(@RequestParam("paymentId") String paymentId, @RequestParam("PayerID") String payerId) {
+		try {
+			Payment payment = service.executePayment(paymentId, payerId);
+			if (payment.getState().equals("approved")) {
+				System.out.println("OrderId "+ payment.getTransactions().get(0).getDescription());
+				return ResponseEntity.ok(payment.getTransactions().get(0).getDescription());
+			}
+		} catch (PayPalRESTException e) {
+			System.out.println(e.getMessage());
+		}
+		return ResponseEntity.badRequest().body("failed");
+	}
 }
+//@Controller
+//@RequestMapping(value = "pay/success")
+//class ViewPaypalController{
+//	@Autowired
+//	PaypalService service;
+//	@GetMapping
+//	public String successPay(@RequestParam("paymentId") String paymentId, @RequestParam("PayerID") String payerId, HttpSession session) {
+//		try {
+//			Payment payment = service.executePayment(paymentId, payerId);
+//			if (payment.getState().equals("approved")) {
+//				return "success";
+//			}
+//		} catch (PayPalRESTException e) {
+//			System.out.println(e.getMessage());
+//		}
+//		return "redirect:/";
+//	}
+//	private void sendPaymentSuccessToGolang(String jwtToken, String orderId) {
+//		System.out.println("jwtToken"+ jwtToken);
+//		System.out.println("orderId"+ orderId);
+//		RestTemplate restTemplate =  new RestTemplate();
+//		HttpHeaders headers = new HttpHeaders();
+//		headers.set("token", jwtToken);
+//		headers.setContentType(MediaType.APPLICATION_JSON);
+//		Map<String, String> requestBody = new HashMap<>();
+//		requestBody.put("order_id", orderId);
+//
+//		HttpEntity<Map<String, String>> httpEntity = new HttpEntity<>(requestBody, headers);
+//
+//		// Make the HTTP POST request to the Fiber Golang API
+//		ResponseEntity<String> response = restTemplate.exchange(
+//				"http://localhost:8080/client/payment/success",
+//				HttpMethod.POST,
+//				httpEntity,
+//				String.class
+//		);
+//		String responseBody = response.getBody();
+//		System.out.println("Response from Fiber API: " + responseBody);
+//	}
+//}
