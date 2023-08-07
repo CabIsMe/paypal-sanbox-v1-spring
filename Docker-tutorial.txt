@@ -1,0 +1,17 @@
+Đối với Spring:
+- Maven -> Clean project. Install => Tạo file jar ở target
+- Tạo Dockerfile gồm:
+	FROM openjdk:11 as build
+	ARG JAR_FILE=target/*.jar
+	COPY target/spring-paypal-example-0.0.1-SNAPSHOT.jar app.jar
+	ENTRYPOINT ["java","-jar","/app.jar"]
+	**spring-paypal-example-0.0.1-SNAPSHOT.jar** là tên file jar
+- chọn bản jdk, ở đây là jdk 11
+- CMD: 
+	docker build --tag=paypal-spring:lastet .
+	docker run -p8887:8888 paypal-spring:lastet
+- push to hub CMD:
+	docker login
+	docker images -> Lấy tag và image_id
+	docker tag  <image_id> username/<image-name>:tag
+	docker push myusername/springboot-docker:latest
