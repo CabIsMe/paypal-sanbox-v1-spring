@@ -1,7 +1,11 @@
 com\javatechie\spring\paypal\api\Order.class
+com\javatechie\spring\paypal\api\upload_image\IImageService.class
+com\javatechie\spring\paypal\api\PaypalController.class
+com\javatechie\spring\paypal\api\upload_image\FBInitialize.class
+com\javatechie\spring\paypal\api\upload_image\FBImageController.class
 com\javatechie\spring\paypal\api\CorsConfig.class
 com\javatechie\spring\paypal\api\PaymentResponse.class
-com\javatechie\spring\paypal\api\PaypalController.class
+com\javatechie\spring\paypal\api\upload_image\FBImageService.class
 com\javatechie\spring\paypal\api\CorsConfig$1.class
 com\javatechie\spring\paypal\api\SpringPaypalExampleApplication.class
 com\javatechie\spring\paypal\api\PaypalConfig.class
