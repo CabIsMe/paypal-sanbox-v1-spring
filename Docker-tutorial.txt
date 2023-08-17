@@ -9,7 +9,7 @@
 - chọn bản jdk, ở đây là jdk 11
 - CMD: 
 	docker build --tag=paypal-spring:lastet .
-	docker run -p 9090:9090 paypal-spring:lastet
+	docker run -p 9090:9090 dangbac872001/paypal-spring:lastet
 - push to hub CMD:
 	docker login
 	docker images -> Lấy tag và image_id
